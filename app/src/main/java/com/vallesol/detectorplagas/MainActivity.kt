@@ -17,8 +17,12 @@ class MainActivity : ComponentActivity() {
 
         setContent {
             val modoOscuro by preferencias.modoOscuro.collectAsState(initial = false)
+            val tamanoFuente by preferencias.tamanoFuente.collectAsState(initial = "normal")
 
-            DetectorPlagasTheme(darkTheme = modoOscuro) {
+            DetectorPlagasTheme(
+                darkTheme = modoOscuro,
+                tamanoFuente = tamanoFuente
+            ) {
                 AppNavGraph()
             }
         }

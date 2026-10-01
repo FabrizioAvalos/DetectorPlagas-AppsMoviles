@@ -16,7 +16,14 @@ class ConfiguracionViewModel(application: Application) : AndroidViewModel(applic
     val modoOscuro: StateFlow<Boolean> = repository.modoOscuro
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), false)
 
+    val tamanoFuente: StateFlow<String> = repository.tamanoFuente
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), "normal")
+
     fun setModoOscuro(valor: Boolean) {
         viewModelScope.launch { repository.setModoOscuro(valor) }
+    }
+
+    fun setTamanoFuente(valor: String) {
+        viewModelScope.launch { repository.setTamanoFuente(valor) }
     }
 }

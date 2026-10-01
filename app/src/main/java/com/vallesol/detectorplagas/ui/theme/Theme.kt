@@ -3,6 +3,7 @@ package com.vallesol.detectorplagas.ui.theme
 import android.app.Activity
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Typography
 import androidx.compose.material3.darkColorScheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
@@ -32,9 +33,27 @@ private val DarkColors = darkColorScheme(
 @Composable
 fun DetectorPlagasTheme(
     darkTheme: Boolean = isSystemInDarkTheme(),
+    tamanoFuente: String = "normal", // <-- parámetro nuevo
     content: @Composable () -> Unit
 ) {
     val colorScheme = if (darkTheme) DarkColors else LightColors
+
+    // Factor multiplicador según la opción elegida en Configuración
+    val escala = when (tamanoFuente) {
+        "pequena" -> 0.85f
+        "grande" -> 1.15f
+        else -> 1.0f // "normal"
+    }
+
+    val tipografiaEscalada = Typography(
+        bodyLarge = MaterialTheme.typography.bodyLarge.copy(fontSize = MaterialTheme.typography.bodyLarge.fontSize * escala),
+        bodyMedium = MaterialTheme.typography.bodyMedium.copy(fontSize = MaterialTheme.typography.bodyMedium.fontSize * escala),
+        bodySmall = MaterialTheme.typography.bodySmall.copy(fontSize = MaterialTheme.typography.bodySmall.fontSize * escala),
+        titleMedium = MaterialTheme.typography.titleMedium.copy(fontSize = MaterialTheme.typography.titleMedium.fontSize * escala),
+        titleLarge = MaterialTheme.typography.titleLarge.copy(fontSize = MaterialTheme.typography.titleLarge.fontSize * escala),
+        labelMedium = MaterialTheme.typography.labelMedium.copy(fontSize = MaterialTheme.typography.labelMedium.fontSize * escala),
+        labelSmall = MaterialTheme.typography.labelSmall.copy(fontSize = MaterialTheme.typography.labelSmall.fontSize * escala)
+    )
 
     val view = LocalView.current
     if (!view.isInEditMode) {
@@ -46,6 +65,7 @@ fun DetectorPlagasTheme(
 
     MaterialTheme(
         colorScheme = colorScheme,
+        typography = tipografiaEscalada,
         content = content
     )
 }
