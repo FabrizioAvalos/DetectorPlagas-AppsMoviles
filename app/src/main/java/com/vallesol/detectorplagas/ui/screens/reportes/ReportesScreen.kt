@@ -17,19 +17,26 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Assignment
 import androidx.compose.material.icons.filled.BugReport
+import androidx.compose.material.icons.filled.DeleteSweep
 import androidx.compose.material.icons.filled.LocationOn
 import androidx.compose.material.icons.filled.Science
 import androidx.compose.material.icons.filled.Share
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
@@ -52,8 +59,24 @@ fun ReportesScreen(
 ) {
     val context = LocalContext.current
     val reportes by viewModel.reportes.collectAsStateWithLifecycle()
+    var mostrarDialogoBorrar by remember { mutableStateOf(false) }
 
-    PantallaConDrawer(navController = navController, titulo = "Reportes") { modifier ->
+    PantallaConDrawer(
+        navController = navController,
+        titulo = "Reportes",
+        actions = {
+            // El botón de eliminar solo aparece en el TopBar si hay reportes guardados
+            if (reportes.isNotEmpty()) {
+                IconButton(onClick = { mostrarDialogoBorrar = true }) {
+                    Icon(
+                        imageVector = Icons.Filled.DeleteSweep,
+                        contentDescription = "Borrar todo",
+                        tint = MaterialTheme.colorScheme.error
+                    )
+                }
+            }
+        }
+    ) { modifier ->
         Column(
             modifier = modifier
                 .fillMaxWidth()
@@ -112,7 +135,6 @@ fun ReportesScreen(
                 }
             }
 
-            // Botón de exportación a CSV (deshabilitado si no hay reportes)
             Button(
                 onClick = { exportarCsv(context, reportes) },
                 enabled = reportes.isNotEmpty(),
@@ -138,6 +160,30 @@ fun ReportesScreen(
                 )
             }
         }
+    }
+
+    // Diálogo de confirmación para vaciar el historial de Room
+    if (mostrarDialogoBorrar) {
+        AlertDialog(
+            onDismissRequest = { mostrarDialogoBorrar = false },
+            title = { Text("Vaciar historial") },
+            text = { Text("¿Estás seguro de eliminar todos los reportes guardados? Esta acción no se puede deshacer.") },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        viewModel.borrarTodo()
+                        mostrarDialogoBorrar = false
+                    }
+                ) {
+                    Text("Eliminar todo", color = MaterialTheme.colorScheme.error)
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { mostrarDialogoBorrar = false }) {
+                    Text("Cancelar")
+                }
+            }
+        )
     }
 }
 
