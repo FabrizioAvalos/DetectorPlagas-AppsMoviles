@@ -38,6 +38,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.core.content.ContextCompat
 import androidx.core.content.FileProvider
 import androidx.navigation.NavController
 import com.vallesol.detectorplagas.ui.navigation.PantallaConDrawer
@@ -59,6 +60,18 @@ fun DetectarScreen(navController: NavController) {
         }
     }
 
+    val lanzadorPermiso = rememberLauncherForActivityResult(
+        ActivityResultContracts.RequestPermission()
+    ) { concedido ->
+        if (concedido) {
+            val uri = crearUriParaFoto(context)
+            uriFotoTemporal = uri
+            lanzadorCamara.launch(uri)
+        }
+        // Si no se concede, simplemente no pasa nada: el usuario se queda
+        // en la pantalla y puede intentar de nuevo o usar la galería.
+    }
+
     val lanzadorGaleria = rememberLauncherForActivityResult(
         ActivityResultContracts.GetContent()
     ) { uri: Uri? ->
@@ -68,9 +81,17 @@ fun DetectarScreen(navController: NavController) {
     }
 
     fun abrirCamara() {
-        val uri = crearUriParaFoto(context)
-        uriFotoTemporal = uri
-        lanzadorCamara.launch(uri)
+        val tienePermiso = ContextCompat.checkSelfPermission(
+            context, Manifest.permission.CAMERA
+        ) == PackageManager.PERMISSION_GRANTED
+
+        if (tienePermiso) {
+            val uri = crearUriParaFoto(context)
+            uriFotoTemporal = uri
+            lanzadorCamara.launch(uri)
+        } else {
+            lanzadorPermiso.launch(Manifest.permission.CAMERA)
+        }
     }
 
     PantallaConDrawer(navController = navController, titulo = "Analizar Plaga") { modifier ->
