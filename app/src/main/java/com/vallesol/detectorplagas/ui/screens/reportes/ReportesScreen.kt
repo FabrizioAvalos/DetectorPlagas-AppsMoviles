@@ -1,5 +1,6 @@
 package com.vallesol.detectorplagas.ui.screens.reportes
 
+import android.content.Intent
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -18,6 +19,9 @@ import androidx.compose.material.icons.filled.Assignment
 import androidx.compose.material.icons.filled.BugReport
 import androidx.compose.material.icons.filled.LocationOn
 import androidx.compose.material.icons.filled.Science
+import androidx.compose.material.icons.filled.Share
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
@@ -28,20 +32,25 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.core.content.FileProvider
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import com.vallesol.detectorplagas.Reporte
 import com.vallesol.detectorplagas.ui.navigation.PantallaConDrawer
+import java.io.File
+import java.io.FileWriter
 
 @Composable
 fun ReportesScreen(
     navController: NavController,
     viewModel: ReportesViewModel = viewModel()
 ) {
+    val context = LocalContext.current
     val reportes by viewModel.reportes.collectAsStateWithLifecycle()
 
     PantallaConDrawer(navController = navController, titulo = "Reportes") { modifier ->
@@ -52,12 +61,11 @@ fun ReportesScreen(
         ) {
             Spacer(modifier = Modifier.height(4.dp))
 
-            // Si no hay reportes, mostramos un estado vacío amigable e ilustrado
             if (reportes.isEmpty()) {
                 Box(
                     modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(top = 64.dp),
+                        .weight(1f)
+                        .fillMaxWidth(),
                     contentAlignment = Alignment.Center
                 ) {
                     Column(horizontalAlignment = Alignment.CenterHorizontally) {
@@ -92,12 +100,42 @@ fun ReportesScreen(
                     }
                 }
             } else {
-                LazyColumn(modifier = Modifier.fillMaxWidth()) {
+                LazyColumn(
+                    modifier = Modifier
+                        .weight(1f)
+                        .fillMaxWidth()
+                ) {
                     items(reportes) { reporte ->
                         TarjetaReporte(reporte)
                         Spacer(modifier = Modifier.height(12.dp))
                     }
                 }
+            }
+
+            // Botón de exportación a CSV (deshabilitado si no hay reportes)
+            Button(
+                onClick = { exportarCsv(context, reportes) },
+                enabled = reportes.isNotEmpty(),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(vertical = 12.dp)
+                    .height(50.dp),
+                shape = RoundedCornerShape(16.dp),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = MaterialTheme.colorScheme.primary,
+                    disabledContainerColor = MaterialTheme.colorScheme.surfaceVariant
+                )
+            ) {
+                Icon(
+                    imageVector = Icons.Filled.Share,
+                    contentDescription = "Exportar",
+                    modifier = Modifier.padding(end = 8.dp)
+                )
+                Text(
+                    text = "Exportar a CSV",
+                    style = MaterialTheme.typography.bodyLarge,
+                    fontWeight = FontWeight.Bold
+                )
             }
         }
     }
@@ -118,7 +156,6 @@ private fun TarjetaReporte(reporte: Reporte) {
                 .fillMaxWidth()
                 .padding(16.dp)
         ) {
-            // Encabezado: badge circular con la plaga detectada + fecha como subtítulo
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Surface(
                     shape = CircleShape,
@@ -152,7 +189,6 @@ private fun TarjetaReporte(reporte: Reporte) {
 
             Spacer(modifier = Modifier.height(10.dp))
 
-            // Ubicación con ícono, en vez de texto plano concatenado
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Icon(
                     imageVector = Icons.Filled.LocationOn,
@@ -170,7 +206,6 @@ private fun TarjetaReporte(reporte: Reporte) {
 
             Spacer(modifier = Modifier.height(12.dp))
 
-            // Agente recomendado como chip con ícono, mismo patrón que en Guía de Controladores
             Surface(
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(10.dp),
@@ -196,5 +231,31 @@ private fun TarjetaReporte(reporte: Reporte) {
                 }
             }
         }
+    }
+}
+
+private fun exportarCsv(context: android.content.Context, reportes: List<Reporte>) {
+    try {
+        val carpeta = File(context.getExternalFilesDir(null), "reportes")
+        if (!carpeta.exists()) carpeta.mkdirs()
+
+        val archivo = File(carpeta, "reportes_detectorplagas.csv")
+        FileWriter(archivo).use { writer ->
+            writer.append("Fecha,Plaga,Agente recomendado,Ubicación\n")
+            reportes.forEach { reporte ->
+                writer.append("${reporte.fecha},${reporte.plaga},${reporte.agenteRecomendado},${reporte.ubicacion}\n")
+            }
+        }
+
+        val uri = FileProvider.getUriForFile(context, "${context.packageName}.fileprovider", archivo)
+        val intentCompartir = Intent(Intent.ACTION_SEND).apply {
+            type = "text/csv"
+            putExtra(Intent.EXTRA_STREAM, uri)
+            addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+        }
+        context.startActivity(Intent.createChooser(intentCompartir, "Exportar reporte"))
+
+    } catch (e: Exception) {
+        android.widget.Toast.makeText(context, "Error al exportar: ${e.message}", android.widget.Toast.LENGTH_SHORT).show()
     }
 }
