@@ -16,6 +16,8 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.Book
 import androidx.compose.material.icons.filled.LocationOn
 import androidx.compose.material.icons.filled.Save
 import androidx.compose.material3.Button
@@ -23,6 +25,7 @@ import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -48,6 +51,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import com.vallesol.detectorplagas.ml.DetectionResult
 import com.vallesol.detectorplagas.ui.navigation.PantallaConDrawer
+import com.vallesol.detectorplagas.ui.navigation.Rutas
 
 @Composable
 fun ResultScreen(
@@ -100,7 +104,6 @@ fun ResultScreen(
 
             Spacer(modifier = Modifier.height(12.dp))
 
-            // Campo de texto para que el usuario digite el Lote o Campo
             OutlinedTextField(
                 value = ubicacionInput,
                 onValueChange = { ubicacionInput = it },
@@ -144,27 +147,57 @@ fun ResultScreen(
 
             Spacer(modifier = Modifier.height(8.dp))
 
-            // Botón de guardado
-            Button(
-                onClick = {
-                    viewModel.guardarReporte(ubicacionInput.ifBlank { "Sin especificar" })
+            Column(modifier = Modifier.fillMaxWidth()) {
+                Button(
+                    onClick = {
+                        viewModel.guardarReporte(ubicacionInput.ifBlank { "Sin especificar" })
 
-                    android.widget.Toast.makeText(
-                        context,
-                        "¡Reporte guardado con éxito!",
-                        android.widget.Toast.LENGTH_SHORT
-                    ).show()
+                        android.widget.Toast.makeText(
+                            context,
+                            "¡Reporte guardado con éxito!",
+                            android.widget.Toast.LENGTH_SHORT
+                        ).show()
 
-                    navController.popBackStack()
-                },
-                enabled = viewModel.resultados.isNotEmpty(),
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(50.dp),
-                shape = RoundedCornerShape(16.dp)
-            ) {
-                Icon(Icons.Filled.Save, contentDescription = null, modifier = Modifier.padding(end = 8.dp))
-                Text("Guardar reporte", style = MaterialTheme.typography.bodyLarge, fontWeight = FontWeight.Bold)
+                        navController.popBackStack()
+                    },
+                    enabled = viewModel.resultados.isNotEmpty(),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(50.dp),
+                    shape = RoundedCornerShape(16.dp)
+                ) {
+                    Icon(Icons.Filled.Save, contentDescription = null, modifier = Modifier.padding(end = 8.dp))
+                    Text("Guardar reporte", style = MaterialTheme.typography.bodyLarge, fontWeight = FontWeight.Bold)
+                }
+
+                Spacer(modifier = Modifier.height(8.dp))
+
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    OutlinedButton(
+                        onClick = { navController.popBackStack() },
+                        modifier = Modifier
+                            .weight(1f)
+                            .height(48.dp),
+                        shape = RoundedCornerShape(16.dp)
+                    ) {
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = null, modifier = Modifier.padding(end = 4.dp))
+                        Text("Otra foto")
+                    }
+
+                    OutlinedButton(
+                        onClick = { navController.navigate(Rutas.GuiaPlagas.ruta) },
+                        modifier = Modifier
+                            .weight(1f)
+                            .height(48.dp),
+                        shape = RoundedCornerShape(16.dp)
+                    ) {
+                        Icon(Icons.Filled.Book, contentDescription = null, modifier = Modifier.padding(end = 4.dp))
+                        Text("Ver guía")
+                    }
+                }
             }
         }
     }
