@@ -13,11 +13,25 @@ class ConfiguracionViewModel(application: Application) : AndroidViewModel(applic
 
     private val repository = PreferenciasRepository(application)
 
+    val guardarFotosAutomatico: StateFlow<Boolean> = repository.guardarFotosAutomatico
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), true)
+
+    val calidadCaptura: StateFlow<String> = repository.calidadCaptura
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), "media")
+
     val modoOscuro: StateFlow<Boolean> = repository.modoOscuro
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), false)
 
     val tamanoFuente: StateFlow<String> = repository.tamanoFuente
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), "normal")
+
+    fun setGuardarFotosAutomatico(valor: Boolean) {
+        viewModelScope.launch { repository.setGuardarFotosAutomatico(valor) }
+    }
+
+    fun setCalidadCaptura(valor: String) {
+        viewModelScope.launch { repository.setCalidadCaptura(valor) }
+    }
 
     fun setModoOscuro(valor: Boolean) {
         viewModelScope.launch { repository.setModoOscuro(valor) }
@@ -25,5 +39,9 @@ class ConfiguracionViewModel(application: Application) : AndroidViewModel(applic
 
     fun setTamanoFuente(valor: String) {
         viewModelScope.launch { repository.setTamanoFuente(valor) }
+    }
+
+    fun borrarHistorial() {
+        viewModelScope.launch { repository.borrarHistorialLocal() }
     }
 }
