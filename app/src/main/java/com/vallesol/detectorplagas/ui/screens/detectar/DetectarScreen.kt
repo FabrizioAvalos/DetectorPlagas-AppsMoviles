@@ -254,8 +254,16 @@ private fun convertirUriABitmap(uri: Uri, context: Context): Bitmap? {
     return try {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
             val source = android.graphics.ImageDecoder.createSource(context.contentResolver, uri)
-            android.graphics.ImageDecoder.decodeBitmap(source) { decoder, _, _ ->
+            android.graphics.ImageDecoder.decodeBitmap(source) { decoder, info, _ ->
                 decoder.allocator = android.graphics.ImageDecoder.ALLOCATOR_SOFTWARE
+                val maxLado = maxOf(info.size.width, info.size.height)
+                if (maxLado > 1600) {
+                    val escala = 1600f / maxLado
+                    decoder.setTargetSize(
+                        (info.size.width * escala).toInt(),
+                        (info.size.height * escala).toInt()
+                    )
+                }
             }
         } else {
             @Suppress("DEPRECATION")
