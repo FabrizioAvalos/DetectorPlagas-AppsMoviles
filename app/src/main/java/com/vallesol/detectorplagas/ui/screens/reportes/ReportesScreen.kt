@@ -40,6 +40,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -65,7 +66,6 @@ fun ReportesScreen(
         navController = navController,
         titulo = "Reportes",
         actions = {
-            // El botón de eliminar solo aparece en el TopBar si hay reportes guardados
             if (reportes.isNotEmpty()) {
                 IconButton(onClick = { mostrarDialogoBorrar = true }) {
                     Icon(
@@ -162,7 +162,6 @@ fun ReportesScreen(
         }
     }
 
-    // Diálogo de confirmación para vaciar el historial de Room
     if (mostrarDialogoBorrar) {
         AlertDialog(
             onDismissRequest = { mostrarDialogoBorrar = false },
@@ -250,7 +249,46 @@ private fun TarjetaReporte(reporte: Reporte) {
                 )
             }
 
-            Spacer(modifier = Modifier.height(12.dp))
+            // 🌤️ SECCIÓN DE CLIMA GUARDADO EN EL REPORTE
+            if (!reporte.temperatura.isNullOrBlank()) {
+                Spacer(modifier = Modifier.height(8.dp))
+                Surface(
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(10.dp),
+                    color = MaterialTheme.colorScheme.tertiaryContainer.copy(alpha = 0.2f)
+                ) {
+                    Column(modifier = Modifier.padding(10.dp)) {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = androidx.compose.foundation.layout.Arrangement.SpaceBetween
+                        ) {
+                            Text(
+                                text = "🌤️ Clima en campo",
+                                style = MaterialTheme.typography.bodySmall,
+                                fontWeight = FontWeight.Bold,
+                                color = MaterialTheme.colorScheme.onTertiaryContainer
+                            )
+                            Text(
+                                text = "${reporte.temperatura} | 💧 ${reporte.humedad}",
+                                style = MaterialTheme.typography.bodySmall,
+                                fontWeight = FontWeight.SemiBold,
+                                color = MaterialTheme.colorScheme.primary
+                            )
+                        }
+                        if (!reporte.recomendacionClima.isNullOrBlank()) {
+                            Spacer(modifier = Modifier.height(2.dp))
+                            Text(
+                                text = reporte.recomendacionClima,
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                fontStyle = FontStyle.Italic
+                            )
+                        }
+                    }
+                }
+            }
+
+            Spacer(modifier = Modifier.height(10.dp))
 
             Surface(
                 modifier = Modifier.fillMaxWidth(),
@@ -286,10 +324,27 @@ private fun exportarCsv(context: android.content.Context, reportes: List<Reporte
         if (!carpeta.exists()) carpeta.mkdirs()
 
         val archivo = File(carpeta, "reportes_detectorplagas.csv")
-        FileWriter(archivo).use { writer ->
-            writer.append("Fecha,Plaga,Agente recomendado,Ubicación\n")
-            reportes.forEach { reporte ->
-                writer.append("${reporte.fecha},${reporte.plaga},${reporte.agenteRecomendado},${reporte.ubicacion}\n")
+
+        // Usamos OutputStreamWriter con UTF-8 y añadimos el BOM (\uFEFF) para que Excel lo abra con tildes perfectas
+        archivo.outputStream().use { fos ->
+            fos.write(byteArrayOf(0xEF.toByte(), 0xBB.toByte(), 0xBF.toByte())) // BOM UTF-8
+            fos.bufferedWriter(java.nio.charset.StandardCharsets.UTF_8).use { writer ->
+
+                // Encabezados limpios
+                writer.append("\"Fecha\",\"Plaga\",\"Agente recomendado\",\"Ubicación\",\"Temperatura\",\"Humedad\",\"Recomendación Clima\"\n")
+
+                reportes.forEach { reporte ->
+                    val fecha = reporte.fecha
+                    val plaga = reporte.plaga
+                    val agente = reporte.agenteRecomendado
+                    val ubicacion = reporte.ubicacion.replace("\"", "\"\"") // Escapamos comillas si las hubiera
+                    val temp = reporte.temperatura ?: "N/A"
+                    val hum = reporte.humedad ?: "N/A"
+                    val recClima = (reporte.recomendacionClima ?: "N/A").replace("\"", "\"\"")
+
+                    // Envolvemos cada valor entre comillas dobles para que Excel respete las comas internas ("Trujillo, La Libertad")
+                    writer.append("\"$fecha\",\"$plaga\",\"$agente\",\"$ubicacion\",\"$temp\",\"$hum\",\"$recClima\"\n")
+                }
             }
         }
 
