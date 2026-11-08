@@ -136,6 +136,9 @@ class PestDetectorHelper(private val context: Context) {
         interpreter = null
     }
 
+    val cargado: Boolean
+        get() = interpreter != null
+
     private fun cargarModelo(): MappedByteBuffer {
         val descriptor = context.assets.openFd(NOMBRE_MODELO)
         FileInputStream(descriptor.fileDescriptor).use { flujo ->
