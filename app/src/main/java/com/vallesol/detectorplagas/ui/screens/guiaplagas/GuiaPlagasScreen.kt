@@ -67,7 +67,7 @@ fun GuiaPlagasScreen(
                 .fillMaxWidth()
                 .padding(horizontal = 16.dp, vertical = 8.dp)
         ) {
-            items(controladores) { controlador ->
+            items(controladores, key = { it.id }) { controlador ->
                 TarjetaControlador(controlador)
                 Spacer(modifier = Modifier.height(12.dp))
             }

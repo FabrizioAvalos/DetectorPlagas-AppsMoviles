@@ -128,7 +128,7 @@ fun ReportesScreen(
                         .weight(1f)
                         .fillMaxWidth()
                 ) {
-                    items(reportes) { reporte ->
+                    items(reportes, key = { it.id }) { reporte ->
                         TarjetaReporte(reporte)
                         Spacer(modifier = Modifier.height(12.dp))
                     }
